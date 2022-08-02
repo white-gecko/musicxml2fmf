@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "MusicXML to Flipper Music Format"
 authors = ["Natanael Arndt <arndtn@gmail.com>"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/white-gecko/musicxml2fmf"
 
 [tool.poetry.dependencies]
 python = "^3.8"
