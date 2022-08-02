@@ -22,18 +22,20 @@ durations = {
     8: (1, "")
 }
 
+filetypeHeader = """Filetype: Flipper Music Format
+Version: 0
+BPM: 90
+Duration: 8
+Octave: 5
+Notes: """
+
 
 @click.command()
 @click.option("--input")
 @click.option("--output")
 def convert(input, output):
     with open(output, 'w') as o:
-        o.write("""Filetype: Flipper Music Format
-Version: 0
-BPM: 90
-Duration: 8
-Octave: 5
-Notes: """)
+        o.write(filetypeHeader)
         tree = etree.parse(input)
         res = tree.xpath("//score-partwise/part/measure/note")
         for note in res:
