@@ -13,15 +13,17 @@ downsteps = {
     "B": ("A", 0),
 }
 
+# mapping:
+# duration: (noteValue, dot, correction: (duration))
 durations = {
-    1: (8, ""),
-    2: (4, ""),
-    3: (4, "."),
-    4: (2, ""),
-    5: (2, ""),  # rounded
-    6: (2, "."),
-    7: (2, "."),  # rounded
-    8: (1, ""),
+    1: (8, "", None),
+    2: (4, "", None),
+    3: (4, ".", None),
+    4: (2, "", None),
+    5: (2, "", 1),  # rounded
+    6: (2, ".", None),
+    7: (2, ".", 1),  # rounded
+    8: (1, "", None),
 }
 
 filetypeHeader = """Filetype: Flipper Music Format
@@ -40,8 +42,11 @@ class Note:
         self.octave = int(octave)
 
     def __str__(self):
-        noteValue, dot = durations[self.duration]
-        return f"{noteValue}{self.step}{self.sharp}{self.octave}{dot}"
+        noteValue, dot, correction = durations[self.duration]
+        correctionStr = ""
+        if correction:
+            correctionStr = ", " + str(Rest(correction))
+        return f"{noteValue}{self.step}{self.sharp}{self.octave}{dot}" + correctionStr
 
     def __repr__(self):
         return f"<{self.duration}, {self.step}, {self.sharp}, {self.octave}>"
@@ -65,8 +70,11 @@ class Rest:
         self.duration = int(duration)
 
     def __str__(self):
-        noteValue, dot = durations[self.duration]
-        return f"{noteValue}P{dot}"
+        noteValue, dot, correction = durations[self.duration]
+        correctionStr = ""
+        if correction:
+            correctionStr = ", " + str(Rest(correction))
+        return f"{noteValue}P{dot}" + correctionStr
 
 
 @click.command()
