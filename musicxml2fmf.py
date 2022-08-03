@@ -10,7 +10,7 @@ downsteps = {
     "F": ("E", 0),
     "G": ("F", 0),
     "A": ("G", 0),
-    "B": ("A", 0)
+    "B": ("A", 0),
 }
 
 durations = {
@@ -19,7 +19,7 @@ durations = {
     3: (4, "."),
     4: (2, ""),
     6: (2, "."),
-    8: (1, "")
+    8: (1, ""),
 }
 
 filetypeHeader = """Filetype: Flipper Music Format
@@ -54,7 +54,9 @@ class Rest:
 @click.command()
 @click.option("--input", help="File to read the MusicXML from (suffix: '.musicxml').")
 @click.option("--output", help="File to write the Flipper Music to (suffix: '.fmf').")
-@click.option("--bpm", default=120, help="Beats per minute for the piece (default: 120).")
+@click.option(
+    "--bpm", default=120, help="Beats per minute for the piece (default: 120)."
+)
 @click.option("--duration", default=8, help="Default duration of a tone (default: 8).")
 @click.option("--octave", default=5, help="Default octave of a note (default: 5).")
 def convert(input, output, bpm, duration, octave):
