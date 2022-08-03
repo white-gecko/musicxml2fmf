@@ -60,6 +60,8 @@ class Rest:
 @click.option("--duration", default=8, help="Default duration of a tone (default: 8).")
 @click.option("--octave", default=5, help="Default octave of a note (default: 5).")
 def convert(input, output, bpm, duration, octave):
+    defaultDuration = duration
+    defaultOctave = octave
     flipperNotes = []
     tree = etree.parse(input)
     musicXmlNotes = tree.xpath("//score-partwise/part/measure/note")
@@ -83,6 +85,10 @@ def convert(input, output, bpm, duration, octave):
         note = Note(flipperDuration, step, sharp, octave, dot)
         flipperNotes.append(note)
 
-    with open(output, 'w') as o:
-        o.write(filetypeHeader.format(bpm=bpm, duration=duration, octave=octave))
+    with open(output, "w") as o:
+        o.write(
+            filetypeHeader.format(
+                bpm=bpm, duration=defaultDuration, octave=defaultOctave
+            )
+        )
         o.write(", ".join(str(n) for n in flipperNotes))
