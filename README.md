@@ -18,11 +18,4 @@ $ poetry run musicxml2fmf --help
 
 ## TODO
 
-### Ties
-
-```
-<notations>
- <tied type="stop"/>
- <tied type="start"/>
-</notations>
-```
+Implement divisions
