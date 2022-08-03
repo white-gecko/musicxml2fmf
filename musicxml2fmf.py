@@ -18,7 +18,9 @@ durations = {
     2: (4, ""),
     3: (4, "."),
     4: (2, ""),
+    5: (2, ""),  # rounded
     6: (2, "."),
+    7: (2, "."),  # rounded
     8: (1, ""),
 }
 
@@ -31,24 +33,40 @@ Notes: """
 
 
 class Note:
-    def __init__(self, duration=8, step="C", sharp="", octave=5, dot=""):
-        self.duration = duration
+    def __init__(self, duration=1, step="C", sharp="", octave=5):
+        self.duration = int(duration)
         self.step = step
         self.sharp = sharp
-        self.octave = octave
-        self.dot = dot
+        self.octave = int(octave)
 
     def __str__(self):
-        return f"{self.duration}{self.step}{self.sharp}{self.octave}{self.dot}"
+        noteValue, dot = durations[self.duration]
+        return f"{noteValue}{self.step}{self.sharp}{self.octave}{dot}"
+
+    def __repr__(self):
+        return f"<{self.duration}, {self.step}, {self.sharp}, {self.octave}>"
+
+    def __add__(self, other):
+        if (
+            isinstance(other, Note)
+            and self.step == other.step
+            and self.octave == other.octave
+            and self.sharp == other.sharp
+        ):
+
+            return [
+                Note(self.duration + other.duration, self.step, self.sharp, self.octave)
+            ]
+        return [self, other]
 
 
 class Rest:
-    def __init__(self, duration=8, dot=""):
-        self.duration = duration
-        self.dot = dot
+    def __init__(self, duration=1):
+        self.duration = int(duration)
 
     def __str__(self):
-        return f"{self.duration}P{self.dot}"
+        noteValue, dot = durations[self.duration]
+        return f"{noteValue}P{dot}"
 
 
 @click.command()
@@ -63,13 +81,13 @@ def convert(input, output, bpm, duration, octave):
     defaultDuration = duration
     defaultOctave = octave
     flipperNotes = []
+    overTie = False
     tree = etree.parse(input)
     musicXmlNotes = tree.xpath("//score-partwise/part/measure/note")
     for noteTag in musicXmlNotes:
-        noteDuration = noteTag.xpath("duration")[0].text
-        flipperDuration, dot = durations[int(noteDuration)]
+        duration = noteTag.xpath("duration")[0].text
         if noteTag.xpath("rest"):
-            flipperNotes.append(Rest(flipperDuration))
+            flipperNotes.append(Rest(duration))
             continue
         alter = False
         if noteTag.xpath("pitch/alter"):
@@ -82,8 +100,22 @@ def convert(input, output, bpm, duration, octave):
                 step, octaveShift = downsteps[step]
                 octave = octave + octaveShift
             sharp = "#"
-        note = Note(flipperDuration, step, sharp, octave, dot)
-        flipperNotes.append(note)
+        note = Note(duration, step, sharp, octave)
+        if overTie:
+            tiedNotes = flipperNotes[-1] + note
+            flipperNotes = flipperNotes[:-1] + tiedNotes
+        else:
+            flipperNotes.append(note)
+        if noteTag.xpath("notations/tied") or noteTag.xpath("notations/slur"):
+            tieStart = False
+            tieStop = False
+            for tied in noteTag.xpath("notations/tied") + noteTag.xpath("notations/slur"):
+                tieStart = tied.attrib["type"] in "start"
+                tieStop = tied.attrib["type"] in "stop"
+            if tieStart:
+                overTie = True
+            elif tieStop:
+                overTie = False
 
     with open(output, "w") as o:
         o.write(
