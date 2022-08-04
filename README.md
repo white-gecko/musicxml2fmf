@@ -15,7 +15,3 @@ $ poetry install
 …
 $ poetry run musicxml2fmf --help
 ```
-
-## TODO
-
-Implement divisions

@@ -13,18 +13,49 @@ downsteps = {
     "B": ("A", 0),
 }
 
-# mapping:
-# duration: (noteValue, dot, correction: (duration))
-durations = {
-    1: (8, "", None),
-    2: (4, "", None),
-    3: (4, ".", None),
-    4: (2, "", None),
-    5: (2, "", 1),  # rounded
-    6: (2, ".", None),
-    7: (2, ".", 1),  # rounded
-    8: (1, "", None),
-}
+
+def getNoteValue(duration, divisions):
+    """Convert MusicXML durations to note values.
+
+    This method takes as input the MusicXML duration and the current divisions.
+    The divisions define in how many divisions a measure is seperated.
+    Division 1 separates a measure in 4 units, division 2 in 8 units and so on.
+
+    Accordingly with divisons 2 the smalest note value is an 8th, i.e. duration 1 is an 8th note.
+    with divisons 1 the duration 1 is a 4th note.
+
+    Returns a tuple of the noteValue, a string of dots and the duration that is left over due to rounding error.
+
+    for divisions 2 the output is as follows:
+    durations = {
+        1: (8, "", None),
+        2: (4, "", None),
+        3: (4, ".", None),
+        4: (2, "", None),
+        5: (2, "", 1),  # rounded
+        6: (2, ".", None),
+        7: (2, "..", None),
+        8: (1, "", None),
+    }
+    """
+    v = duration
+    msb = 1  # most significant bit
+    msb_pos = 1
+    while (v := v >> 1):
+        msb = msb << 1
+        msb_pos += 1
+    noteValue = int(format(msb, 'b').zfill(2 + divisions)[::-1], base=2)
+    rest = format(duration - msb, 'b').zfill(msb_pos - 1)
+    dots = ""
+    i = 0
+    while i < len(rest) and int(rest[i]):
+        i += 1
+        dots += "."
+    correction = 0
+    if rest[i:]:
+        correction = int(rest[i:], base=2)
+    return (noteValue, dots, correction)
+
 
 filetypeHeader = """Filetype: Flipper Music Format
 Version: 0
@@ -34,47 +65,48 @@ Octave: {octave}
 Notes: """
 
 
-class Note:
-    def __init__(self, duration=1, step="C", sharp="", octave=5):
-        self.duration = int(duration)
-        self.step = step
-        self.sharp = sharp
-        self.octave = int(octave)
+def noteFactory(divisons):
+    class Note:
+        def __init__(self, duration=1, step="C", sharp="", octave=5):
+            self.duration = int(duration)
+            self.step = step
+            self.sharp = sharp
+            self.octave = int(octave)
 
-    def __str__(self):
-        noteValue, dot, correction = durations[self.duration]
-        correctionStr = ""
-        if correction:
-            correctionStr = ", " + str(Rest(correction))
-        return f"{noteValue}{self.step}{self.sharp}{self.octave}{dot}" + correctionStr
+        def __str__(self):
+            noteValue, dot, correction = getNoteValue(self.duration, divisons)
+            correctionStr = ""
+            if correction:
+                correctionStr = ", " + str(Rest(correction))
+            return f"{noteValue}{self.step}{self.sharp}{self.octave}{dot}" + correctionStr
 
-    def __repr__(self):
-        return f"<{self.duration}, {self.step}, {self.sharp}, {self.octave}>"
+        def __repr__(self):
+            return f"<{self.duration}, {self.step}, {self.sharp}, {self.octave}>"
 
-    def __add__(self, other):
-        if (
-            isinstance(other, Note)
-            and self.step == other.step
-            and self.octave == other.octave
-            and self.sharp == other.sharp
-        ):
+        def __add__(self, other):
+            if (
+                isinstance(other, Note)
+                and self.step == other.step
+                and self.octave == other.octave
+                and self.sharp == other.sharp
+            ):
 
-            return [
-                Note(self.duration + other.duration, self.step, self.sharp, self.octave)
-            ]
-        return [self, other]
+                return [
+                    Note(self.duration + other.duration, self.step, self.sharp, self.octave)
+                ]
+            return [self, other]
 
+    class Rest:
+        def __init__(self, duration=1):
+            self.duration = int(duration)
 
-class Rest:
-    def __init__(self, duration=1):
-        self.duration = int(duration)
-
-    def __str__(self):
-        noteValue, dot, correction = durations[self.duration]
-        correctionStr = ""
-        if correction:
-            correctionStr = ", " + str(Rest(correction))
-        return f"{noteValue}P{dot}" + correctionStr
+        def __str__(self):
+            noteValue, dot, correction = getNoteValue(self.duration, divisons)
+            correctionStr = ""
+            if correction:
+                correctionStr = ", " + str(Rest(correction))
+            return f"{noteValue}P{dot}" + correctionStr
+    return Note, Rest
 
 
 @click.command()
@@ -91,6 +123,8 @@ def convert(input, output, bpm, duration, octave):
     flipperNotes = []
     overTie = False
     tree = etree.parse(input)
+    divisions = int(tree.xpath("//score-partwise/part/measure/attributes/divisions")[0].text)
+    Note, Rest = noteFactory(divisions)
     musicXmlNotes = tree.xpath("//score-partwise/part/measure/note")
     for noteTag in musicXmlNotes:
         duration = noteTag.xpath("duration")[0].text
