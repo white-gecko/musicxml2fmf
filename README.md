@@ -15,3 +15,10 @@ $ poetry install
 …
 $ poetry run musicxml2fmf --help
 ```
+
+## TODO
+- Tests
+- Changelog
+- Support for multiple parts: selection of a part to convert
+- get bpm based on the tempo given in musicxml
+- Don't write out the octave and duration if it is the same as the default
