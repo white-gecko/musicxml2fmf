@@ -6,9 +6,18 @@ This allows to compose your music with graphical tools like [MuseScore](https://
 
 ## Installation
 
-To install the script you need [poetry](https://python-poetry.org/).
+### Via PyPi
 
-Run:
+The package is on [pypi](https://pypi.org/project/musicxml2fmf/). Just run:
+
+```
+pip install musicxml2fmf
+```
+
+### From Source
+
+To install the script from source you need [poetry](https://python-poetry.org/).
+With poetry run:
 
 ```
 $ poetry install
