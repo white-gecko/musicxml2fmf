@@ -6,6 +6,8 @@ This allows to compose your music with graphical tools like [MuseScore](https://
 
 ## Installation
 
+The basic usage is explained here: https://github.com/white-gecko/musicxml2fmf/issues/1
+
 ### Via PyPi
 
 The package is on [pypi](https://pypi.org/project/musicxml2fmf/). Just run:
